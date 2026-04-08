@@ -1,0 +1,32 @@
+[
+  {
+    "name": "auth_token",
+    "value": "REPLACE_WITH_REAL_GROK_COOKIE",
+    "domain": ".grok.com",
+    "path": "/",
+    "expires": 1893456000,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "cf_clearance",
+    "value": "REPLACE_WITH_REAL_CF_CLEARANCE",
+    "domain": ".grok.com",
+    "path": "/",
+    "expires": 1893456000,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "ct0",
+    "value": "REPLACE_WITH_REAL_X_CSRF_TOKEN",
+    "domain": ".x.com",
+    "path": "/",
+    "expires": 1893456000,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Lax"
+  }
+]
