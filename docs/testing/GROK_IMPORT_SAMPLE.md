@@ -71,7 +71,26 @@ curl -X POST "https://flowgrok.plxeditor.com/api/v1/profiles/${PROFILE_ID}/cooki
 
 Script:
 
+- `/home/vpsroot/projects/frontend/FlowGrok/scripts/create-smoke-user-and-profile.sh`
 - `/home/vpsroot/projects/frontend/FlowGrok/scripts/smoke-import-grok.sh`
+
+Tạo sẵn user smoke, login và profile Grok:
+
+```bash
+cd /home/vpsroot/projects/frontend/FlowGrok
+./scripts/create-smoke-user-and-profile.sh
+```
+
+Nếu muốn override:
+
+```bash
+cd /home/vpsroot/projects/frontend/FlowGrok
+BASE_URL="https://testflowgrok.plxeditor.com" \
+EMAIL="your-test@example.com" \
+PASSWORD="YourStrongPassword123!" \
+PROFILE_NAME="My Grok Smoke Profile" \
+./scripts/create-smoke-user-and-profile.sh
+```
 
 Ví dụ với storage state:
 
