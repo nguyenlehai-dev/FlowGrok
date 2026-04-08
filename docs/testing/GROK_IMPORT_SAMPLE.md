@@ -71,8 +71,26 @@ curl -X POST "https://flowgrok.plxeditor.com/api/v1/profiles/${PROFILE_ID}/cooki
 
 Script:
 
+- `/home/vpsroot/projects/frontend/FlowGrok/scripts/full-grok-smoke.sh`
 - `/home/vpsroot/projects/frontend/FlowGrok/scripts/create-smoke-user-and-profile.sh`
 - `/home/vpsroot/projects/frontend/FlowGrok/scripts/smoke-import-grok.sh`
+
+Chạy một lệnh full flow:
+
+```bash
+cd /home/vpsroot/projects/frontend/FlowGrok
+FILE_PATH="/home/vpsroot/projects/frontend/FlowGrok/docs/testing/samples/grok-storage-state.sample.json" \
+./scripts/full-grok-smoke.sh
+```
+
+Ví dụ trên domain test:
+
+```bash
+cd /home/vpsroot/projects/frontend/FlowGrok
+BASE_URL="https://testflowgrok.plxeditor.com" \
+FILE_PATH="/home/vpsroot/projects/frontend/FlowGrok/docs/testing/samples/grok-storage-state.sample.json" \
+./scripts/full-grok-smoke.sh
+```
 
 Tạo sẵn user smoke, login và profile Grok:
 
