@@ -67,6 +67,33 @@ curl -X POST "https://flowgrok.plxeditor.com/api/v1/profiles/${PROFILE_ID}/cooki
   -F "file=@/home/vpsroot/projects/frontend/FlowGrok/docs/testing/samples/grok-cookies.sample.json"
 ```
 
+## Script dùng ngay
+
+Script:
+
+- `/home/vpsroot/projects/frontend/FlowGrok/scripts/smoke-import-grok.sh`
+
+Ví dụ với storage state:
+
+```bash
+cd /home/vpsroot/projects/frontend/FlowGrok
+TOKEN="REPLACE_WITH_BEARER_TOKEN" \
+PROFILE_ID="REPLACE_WITH_PROFILE_ID" \
+FILE_PATH="/home/vpsroot/projects/frontend/FlowGrok/docs/testing/samples/grok-storage-state.sample.json" \
+./scripts/smoke-import-grok.sh
+```
+
+Ví dụ với cookie JSON:
+
+```bash
+cd /home/vpsroot/projects/frontend/FlowGrok
+TOKEN="REPLACE_WITH_BEARER_TOKEN" \
+PROFILE_ID="REPLACE_WITH_PROFILE_ID" \
+FILE_PATH="/home/vpsroot/projects/frontend/FlowGrok/docs/testing/samples/grok-cookies.sample.json" \
+SOURCE_TYPE="json" \
+./scripts/smoke-import-grok.sh
+```
+
 ## Kỳ vọng sau import
 
 - API trả `import_status = success`
