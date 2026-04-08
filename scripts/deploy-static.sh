@@ -29,7 +29,19 @@ if [[ ! -d "dist" ]]; then
   exit 1
 fi
 
+if [[ ! -w "$TARGET_DIR" ]]; then
+  echo "Target directory is not writable: $TARGET_DIR"
+  echo "Current user: $(id -un)"
+  echo "Fix ownership or ACL before deploying."
+  exit 1
+fi
+
 mkdir -p "$TARGET_DIR"
-rsync -av --delete dist/ "$TARGET_DIR"/
+rsync -rlvz --delete \
+  --omit-dir-times \
+  --no-perms \
+  --no-owner \
+  --no-group \
+  dist/ "$TARGET_DIR"/
 
 echo "Deployed frontend build to $TARGET_DIR"
