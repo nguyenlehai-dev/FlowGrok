@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import type { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { Col, Container, Row } from 'react-bootstrap';
 import { useAuthStore } from '../store/authStore';
 import { AuthFormCard } from '../components/auth/AuthFormCard';
 import { AuthHeroPanel } from '../components/auth/AuthHeroPanel';
+import '../components/auth/auth.css';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -28,36 +31,43 @@ export default function LoginPage() {
         await login(email, password);
       }
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Đã xảy ra lỗi');
+    } catch (err) {
+      const apiError = err as AxiosError<{ detail?: string }>;
+      setError(apiError.response?.data?.detail || 'Đã xảy ra lỗi');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f7fa] px-4 py-4 font-['Public_Sans',sans-serif] text-[#5d596c] sm:px-6 lg:px-8 lg:py-8">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-[1480px] grid-cols-1 gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <AuthHeroPanel />
-        <AuthFormCard
-          email={email}
-          password={password}
-          showPassword={showPassword}
-          isRegister={isRegister}
-          rememberMe={rememberMe}
-          error={error}
-          loading={loading}
-          onEmailChange={setEmail}
-          onPasswordChange={setPassword}
-          onTogglePassword={() => setShowPassword(!showPassword)}
-          onRememberMeChange={setRememberMe}
-          onToggleMode={() => {
-            setIsRegister(!isRegister);
-            setError('');
-          }}
-          onSubmit={handleSubmit}
-        />
-      </div>
+    <div className="auth-page">
+      <Container fluid className="auth-stage d-flex align-items-center justify-content-center px-0">
+        <Row className="auth-shell g-0 mx-auto">
+          <Col lg={7} xl={8}>
+            <AuthHeroPanel />
+          </Col>
+          <Col lg={5} xl={4}>
+            <AuthFormCard
+              email={email}
+              password={password}
+              showPassword={showPassword}
+              isRegister={isRegister}
+              rememberMe={rememberMe}
+              error={error}
+              loading={loading}
+              onEmailChange={setEmail}
+              onPasswordChange={setPassword}
+              onTogglePassword={() => setShowPassword(!showPassword)}
+              onRememberMeChange={setRememberMe}
+              onToggleMode={() => {
+                setIsRegister(!isRegister);
+                setError('');
+              }}
+              onSubmit={handleSubmit}
+            />
+          </Col>
+        </Row>
+      </Container>
     </div>
   );
 }

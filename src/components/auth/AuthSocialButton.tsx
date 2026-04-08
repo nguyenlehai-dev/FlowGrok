@@ -1,18 +1,16 @@
-import type { ReactNode } from 'react';
+import otherPayMethodIcon from '../../assets/Other-Pay-Method.png';
 
 type AuthSocialButtonProps = {
   label: string;
-  children: ReactNode;
 };
 
-export function AuthSocialButton({ label, children }: AuthSocialButtonProps) {
+export function AuthSocialButton({ label }: AuthSocialButtonProps) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/70 bg-white/80 text-[#6f6b7d] shadow-[0_12px_24px_rgba(20,18,38,0.08)] transition duration-200 hover:-translate-y-0.5 hover:text-[#7367f0]"
-    >
-      {children}
+    <button type="button" className="auth-social w-100">
+      <span className="auth-social-mark">
+        <img src={otherPayMethodIcon} alt="" className="auth-social-icon" />
+      </span>
+      <span>{label}</span>
     </button>
   );
 }
