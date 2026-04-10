@@ -50,6 +50,36 @@ const defaultAntidetectSettings: ProfileAntidetectSettings = {
   device_memory: 8,
 };
 
+const providerGuides: Record<string, { title: string; source: string; steps: string[] }> = {
+  grok: {
+    title: 'Grok Profile',
+    source: 'Đăng nhập bằng cookie hoặc storage_state từ grok.com.',
+    steps: [
+      'Export storage_state_json từ browser/profile đã đăng nhập grok.com.',
+      'Upload vào profile này để lưu cookie riêng và browser cache riêng.',
+      'Chạy Test Login trước khi queue job generate_image hoặc generate_video.',
+    ],
+  },
+  flow: {
+    title: 'Flow Profile',
+    source: 'Đăng nhập bằng cookie hoặc storage_state từ Google Flow trên labs.google.',
+    steps: [
+      'Export storage_state_json từ browser/profile đã đăng nhập Google Flow.',
+      'Upload vào profile này để tách cookie, cache và browser session theo profile.',
+      'Chạy Test Login rồi queue job generate_image hoặc generate_video.',
+    ],
+  },
+  dreamina: {
+    title: 'Dreamina Profile',
+    source: 'Hiện dùng để quản lý category/profile/cookie isolation, sẵn sàng mở rộng provider.',
+    steps: [
+      'Tạo profile, gán proxy nếu cần và cấu hình antidetect cơ bản.',
+      'Import cookie riêng để giữ storage isolation theo profile.',
+      'Dùng như profile quản trị category cho các bước triển khai tiếp theo.',
+    ],
+  },
+};
+
 export default function ProfileDetailView() {
   const { profileId = '' } = useParams();
   const [profile, setProfile] = useState<ProfileItem | null>(null);
@@ -138,6 +168,8 @@ export default function ProfileDetailView() {
     );
   }
 
+  const providerGuide = providerGuides[profile.category] || providerGuides.grok;
+
   return (
     <div className="admin-stack">
       <div className="admin-page-card">
@@ -171,10 +203,7 @@ export default function ProfileDetailView() {
               </label>
               <label className="admin-field">
                 <span>Headless</span>
-                <select className="admin-select" value={String(runtimeSettings.headless)} onChange={(e) => setRuntimeSettings((current) => ({ ...current, headless: e.target.value === 'true' }))}>
-                  <option value="true">true</option>
-                  <option value="false">false</option>
-                </select>
+                <input className="admin-input" value="true (forced by requirement)" disabled />
               </label>
               <label className="admin-field">
                 <span>Timeout ms</span>
@@ -273,10 +302,13 @@ export default function ProfileDetailView() {
               </div>
             </form>
             <div className="admin-kv-list mt-3">
-              <div><strong>Recommended:</strong> Use <code>storage_state_json</code> for Grok.</div>
-              <div><strong>How to get it:</strong> export <code>browser.storage_state(path=&quot;storage_state.json&quot;)</code> from a browser profile that is already logged into <code>grok.com</code>.</div>
+              <div><strong>{providerGuide.title}:</strong> {providerGuide.source}</div>
+              <div><strong>Recommended:</strong> Use <code>storage_state_json</code> whenever possible.</div>
+              <div><strong>How to get it:</strong> export <code>browser.storage_state(path=&quot;storage_state.json&quot;)</code> from a browser profile that is already logged into the target service.</div>
               <div><strong>Fallback:</strong> use cookie <code>json</code> or <code>txt</code> if you do not have Playwright local.</div>
-              <div><strong>Quick steps:</strong> login Grok in browser, export <code>storage_state.json</code>, upload here, then run <code>Test Login</code>.</div>
+              {providerGuide.steps.map((step) => (
+                <div key={step}><strong>Step:</strong> {step}</div>
+              ))}
             </div>
             <p className="admin-page-subtitle mt-3">{loginResult}</p>
             {loginStateDetail ? (
@@ -298,6 +330,8 @@ export default function ProfileDetailView() {
               <div><strong>Cache:</strong> {profile.cache_path || 'n/a'}</div>
               <div><strong>Cookie File:</strong> {profile.cookie_import_name || 'n/a'}</div>
               <div><strong>Imported At:</strong> {profile.cookie_imported_at || 'n/a'}</div>
+              <div><strong>Headless:</strong> true</div>
+              <div><strong>Concurrency:</strong> {runtimeSettings.concurrency_limit}</div>
             </div>
           </div>
         </div>

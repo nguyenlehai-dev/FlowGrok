@@ -21,6 +21,8 @@ export type ProfileItem = {
 export type CreateProfilePayload = {
   name: string;
   category: string;
+  description?: string | null;
+  proxy_id?: string | null;
   cookies_json: string | null;
   antidetect_settings: {
     user_agent: string;

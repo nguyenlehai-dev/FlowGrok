@@ -2,6 +2,63 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Local Grok Smoke
+
+To test Grok locally with a real `storage_state.json`:
+
+1. Start backend:
+
+```bash
+cd /home/vpsroot/projects/backend/-FlowGrok-BE
+cp .env.example .env
+docker compose --profile postgres up -d
+```
+
+2. Run the local smoke helper:
+
+```bash
+cd /home/vpsroot/projects/frontend/FlowGrok
+FILE_PATH="/abs/path/to/storage_state.json" ./scripts/local-grok-smoke.sh
+```
+
+3. Start frontend UI:
+
+```bash
+npm install
+npm run dev
+```
+
+Then:
+- login with the smoke account printed by the script
+- create an API key
+- open `System Auth` in the header
+- verify that key for the current browser session
+- test `Profiles`, `API Docs`, and real Grok jobs locally
+
+## Local Grok With Your Real Chrome Session
+
+If Grok keeps blocking the container/browser session, you can point the local worker at your already-open Chrome session.
+
+1. Open Chrome with remote debugging enabled:
+
+```bash
+google-chrome --remote-debugging-port=9222 --user-data-dir="$HOME/.flowgrok-chrome"
+```
+
+2. In that Chrome window:
+- open `https://grok.com`
+- complete any human verification manually
+- confirm you can reach the real Grok UI
+
+3. Start backend with:
+
+```bash
+cd /home/vpsroot/projects/backend/-FlowGrok-BE
+PLAYWRIGHT_CDP_URL="http://127.0.0.1:9222" uvicorn main:app --reload --host 0.0.0.0 --port 8080
+```
+
+This makes the Grok/Flow worker attach to your real Chrome session instead of launching a fresh Chromium instance.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

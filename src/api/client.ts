@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { AxiosError } from 'axios';
 import type {
   CreateProfilePayload,
   ProfileAntidetectSettings,
@@ -21,6 +22,15 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const healthApi = axios.create({
+  baseURL: `${API_BASE}/api`,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+const rawApi = axios.create({
+  headers: { 'Content-Type': 'application/json' },
+});
+
 type AuthUser = {
   id: string;
   email: string;
@@ -40,6 +50,19 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<{ detail?: string }>) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/login');
+      }
+    }
+    return Promise.reject(error);
+  },
+);
 
 // Auth
 export const authApi = {
@@ -89,7 +112,22 @@ export const jobsApi = {
   getById: (id: string) => api.get<JobItem>(`/jobs/${id}`),
   cancel: (id: string) => api.post<JobItem>(`/jobs/${id}/cancel`),
   listArtifacts: (id: string) => api.get<JobArtifact[]>(`/jobs/${id}/artifacts`),
-  runWorkerOnce: (workerId = 'staging-worker-01') => api.post<WorkerRunOnceResult>('/internal/jobs/run-once', { worker_id: workerId }),
+  runWorkerOnce: (workerId = 'staging-worker-01') => api.post<WorkerRunOnceResult>('/jobs/run-worker-once', { worker_id: workerId }),
+};
+
+export const systemApi = {
+  health: () => healthApi.get<{ status: string; service: string; database: { dialect: string; url: string } }>('/health'),
+  verifyClientKey: async (apiBaseUrl: string, apiKey: string) => {
+    const normalizedBase = apiBaseUrl.startsWith('http')
+      ? apiBaseUrl
+      : `${window.location.origin}${apiBaseUrl.startsWith('/') ? apiBaseUrl : `/${apiBaseUrl}`}`;
+    const response = await rawApi.get<ProfileItem[]>(`${normalizedBase}/client/profiles/`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+    return response.data;
+  },
 };
 
 export default api;

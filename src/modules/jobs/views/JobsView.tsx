@@ -23,6 +23,7 @@ export default function JobsView() {
   const [workerState, setWorkerState] = useState<string>('');
   const [isBusy, setIsBusy] = useState(false);
   const selectedJobStatus = selectedJob?.status ?? null;
+  const selectedProfile = profiles.find((profile) => profile.id === profileId) || null;
 
   const loadJobs = async () => {
     const nextJobs = await fetchJobs(statusFilter ? { status: statusFilter } : undefined);
@@ -191,7 +192,7 @@ export default function JobsView() {
                 <span>Profile</span>
                 <select className="admin-select" value={profileId} onChange={(e) => setProfileId(e.target.value)}>
                   {profiles.map((profile) => (
-                    <option key={profile.id} value={profile.id}>{profile.name}</option>
+                    <option key={profile.id} value={profile.id}>{profile.name} [{profile.category}]</option>
                   ))}
                 </select>
               </label>
@@ -210,6 +211,14 @@ export default function JobsView() {
                 <button type="submit" className="admin-btn admin-btn-primary"><Plus size={16} />Queue Job</button>
                 <button type="button" className="admin-btn admin-btn-muted" onClick={() => setShowForm(false)}>Cancel</button>
               </div>
+              {selectedProfile ? (
+                <div className="admin-kv-list">
+                  <div><strong>Provider:</strong> {selectedProfile.category}</div>
+                  <div><strong>Headless:</strong> true</div>
+                  <div><strong>Concurrency:</strong> {selectedProfile.concurrency_limit || 1}</div>
+                  <div><strong>Cookie imported:</strong> {selectedProfile.cookie_import_name ? 'yes' : 'no'}</div>
+                </div>
+              ) : null}
             </form>
           </div>
         </div>

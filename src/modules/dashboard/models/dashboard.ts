@@ -1,6 +1,10 @@
 export type DashboardStats = {
   profiles: number;
   proxies: number;
+  apiKeys: number;
+  status: string;
+  databaseDialect: string;
+  databaseUrl: string;
 };
 
 export type DashboardCard = {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import avatarImage from '../assets/Avatar-UI-Unicorn-V2.png';
+import ConnectionSettings from './ConnectionSettings';
 import {
   Bell,
   CircleHelp,
@@ -14,6 +15,8 @@ import {
   SunMedium,
   UserRound,
 } from 'lucide-react';
+import { useSystemAuth } from '../auth/SystemAuthContext';
+import { useAuthStore } from '../store/authStore';
 
 type TopbarProps = {
   onOpenMobileSidebar: () => void;
@@ -69,6 +72,8 @@ const profileActions = [
 ] as const;
 
 export default function Topbar({ onOpenMobileSidebar }: TopbarProps) {
+  const { clearKey, isVerified, verifiedInfo } = useSystemAuth();
+  const { logout, user } = useAuthStore();
   const [openMenu, setOpenMenu] = useState<MenuKey>(null);
   const [language, setLanguage] = useState<(typeof languageOptions)[number]>('English');
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
@@ -89,6 +94,12 @@ export default function Topbar({ onOpenMobileSidebar }: TopbarProps) {
     setOpenMenu((current) => (current === menu ? null : menu));
   };
 
+  const handleLogout = () => {
+    clearKey();
+    logout();
+    window.location.replace('/login');
+  };
+
   return (
     <header className="admin-topbar" ref={rootRef}>
       <div className="admin-topbar-leading">
@@ -103,6 +114,17 @@ export default function Topbar({ onOpenMobileSidebar }: TopbarProps) {
       </div>
 
       <div className="admin-top-actions">
+        <ConnectionSettings />
+        <div className="admin-system-auth-status">
+          <span className="admin-system-auth-status-title">System Auth</span>
+          <span className={`admin-system-auth-badge ${isVerified ? 'is-verified' : 'is-unverified'}`}>
+            {isVerified ? verifiedInfo?.apiKeyMasked ?? 'verified' : 'not verified'}
+          </span>
+        </div>
+        <div className="admin-system-auth-user">
+          <span className="admin-system-auth-user-name">{user?.email || 'Guest'}</span>
+          <span className="admin-system-auth-user-role">{user?.role || 'user'}</span>
+        </div>
         <div className="admin-top-action-group">
           <button
             type="button"
@@ -238,7 +260,7 @@ export default function Topbar({ onOpenMobileSidebar }: TopbarProps) {
               </div>
 
               <div className="admin-profile-actions">
-                {profileActions.map((action) => {
+              {profileActions.map((action) => {
                   const Icon = action.icon;
                   return (
                     <button key={action.label} type="button" className="admin-profile-action">
@@ -252,13 +274,18 @@ export default function Topbar({ onOpenMobileSidebar }: TopbarProps) {
                 })}
               </div>
 
-              <button type="button" className="admin-profile-logout">
+              <button type="button" className="admin-profile-logout" onClick={logout}>
                 <span>Logout</span>
                 <LogOut size={16} />
               </button>
             </div>
           ) : null}
         </div>
+
+        <button type="button" className="admin-btn admin-btn-muted" onClick={handleLogout}>
+          <LogOut size={16} />
+          Logout
+        </button>
       </div>
     </header>
   );

@@ -1,3 +1,4 @@
+import { apiDocsModule } from '../modules/api-docs/config';
 import type { SidebarModule } from '../models/sidebar';
 import { apiKeysModule } from '../modules/api-keys/config';
 import { dashboardsModule } from '../modules/dashboards/config';
@@ -10,5 +11,6 @@ export const sidebarModules: SidebarModule[] = [
   profilesModule,
   proxiesModule,
   jobsModule,
+  apiDocsModule,
   apiKeysModule,
 ];

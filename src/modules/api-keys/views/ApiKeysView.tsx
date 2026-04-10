@@ -6,9 +6,11 @@ import { createApiKey, fetchApiKeys, revokeApiKey } from '../services/apiKeyServ
 export default function ApiKeysView() {
   const [keys, setKeys] = useState<ApiKeyItem[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [freshKey, setFreshKey] = useState<ApiKeyItem | null>(null);
 
   const loadApiKeys = async () => {
-    setKeys(await fetchApiKeys());
+    const data = await fetchApiKeys();
+    setKeys(data);
   };
 
   useEffect(() => {
@@ -26,14 +28,15 @@ export default function ApiKeysView() {
   }, []);
 
   const handleCreate = async () => {
-    await createApiKey();
-    loadApiKeys();
+    const created = await createApiKey();
+    setFreshKey(created.data);
+    await loadApiKeys();
   };
 
   const handleRevoke = async (id: string) => {
     if (!confirm('Thu hồi API Key này?')) return;
     await revokeApiKey(id);
-    loadApiKeys();
+    await loadApiKeys();
   };
 
   const handleCopy = (key: string, id: string) => {
@@ -66,6 +69,22 @@ export default function ApiKeysView() {
         </div>
       </div>
 
+      {freshKey?.key ? (
+        <div className="admin-filters border-t-0">
+          <div className="admin-kv-list">
+            <div><strong>API Key mới:</strong> Chỉ hiển thị một lần, hãy lưu lại ngay.</div>
+            <div><strong>Preview:</strong> {freshKey.key_preview || 'n/a'}</div>
+            <div><strong>Full Key:</strong> {freshKey.key}</div>
+          </div>
+          <div className="admin-toolbar-actions mt-3">
+            <button className="admin-btn admin-btn-primary" onClick={() => handleCopy(freshKey.key || '', freshKey.id)}>
+              {copiedId === freshKey.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              Copy New Key
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="admin-table-scroll">
         <table className="admin-table">
           <thead><tr><th>Key</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead>
@@ -76,7 +95,7 @@ export default function ApiKeysView() {
                   <div className="admin-product">
                     <span className="admin-product-thumb"><KeyRound size={18} /></span>
                     <div>
-                      <div className="admin-product-name">{keyItem.key.slice(0, 18)}...</div>
+                      <div className="admin-product-name">{keyItem.key_preview || 'Hidden after create'}</div>
                       <div className="admin-product-meta">{keyItem.id}</div>
                     </div>
                   </div>
@@ -90,7 +109,7 @@ export default function ApiKeysView() {
                 <td><span className={`admin-status ${keyItem.status === 'active' ? 'publish' : 'inactive'}`}>{keyItem.status}</span></td>
                 <td>
                   <div className="admin-table-actions">
-                    <button onClick={() => handleCopy(keyItem.key, keyItem.id)}>{copiedId === keyItem.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button>
+                    {keyItem.key ? <button onClick={() => handleCopy(keyItem.key || '', keyItem.id)}>{copiedId === keyItem.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button> : null}
                     <Pencil className="h-4 w-4" />
                     {keyItem.status === 'active' ? <button onClick={() => handleRevoke(keyItem.id)}><Trash2 className="h-4 w-4" /></button> : null}
                     <CircleEllipsis className="h-4 w-4" />

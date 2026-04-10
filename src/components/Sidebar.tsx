@@ -1,5 +1,6 @@
 import { CircleDot, LogOut, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useSystemAuth } from '../auth/SystemAuthContext';
 import SidebarMenuLink from '../modules/navigation/components/SidebarMenuLink';
 import { sidebarModules } from '../modules/navigation/configs/sidebarMenus';
 import { useAuthStore } from '../store/authStore';
@@ -10,10 +11,12 @@ type SidebarProps = {
 };
 
 export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
+  const { clearKey } = useSystemAuth();
   const { logout, user } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    clearKey();
     logout();
     navigate('/login');
   };

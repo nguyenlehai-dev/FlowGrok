@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { SystemAuthProvider } from './auth/SystemAuthContext';
 import { useAuthStore } from './store/authStore';
 import MainLayout from './layouts/MainLayout';
 import LoginView from './modules/auth/views/LoginView';
+import ApiDocsView from './modules/api-docs/views/ApiDocsView';
 import DashboardView from './modules/dashboard/views/DashboardView';
 import JobsView from './modules/jobs/views/JobsView';
 import ProfileDetailView from './modules/profiles/views/ProfileDetailView';
@@ -27,25 +29,28 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginView />} />
-        <Route
-          element={
-            <ProtectedRoute>
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/" element={<DashboardView />} />
-          <Route path="/jobs" element={<JobsView />} />
-          <Route path="/jobs/:jobId" element={<JobsView />} />
-          <Route path="/profiles" element={<ProfilesView />} />
-          <Route path="/profiles/:profileId" element={<ProfileDetailView />} />
-          <Route path="/proxies" element={<ProxiesView />} />
-          <Route path="/api-keys" element={<ApiKeysView />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <SystemAuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginView />} />
+          <Route
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/" element={<DashboardView />} />
+            <Route path="/jobs" element={<JobsView />} />
+            <Route path="/jobs/:jobId" element={<JobsView />} />
+            <Route path="/profiles" element={<ProfilesView />} />
+            <Route path="/profiles/:profileId" element={<ProfileDetailView />} />
+            <Route path="/proxies" element={<ProxiesView />} />
+            <Route path="/api-keys" element={<ApiKeysView />} />
+            <Route path="/api-docs" element={<ApiDocsView />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </SystemAuthProvider>
     </BrowserRouter>
   );
 }
