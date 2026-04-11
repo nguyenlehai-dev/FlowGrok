@@ -108,10 +108,33 @@ export const proxyApi = {
 
 export const jobsApi = {
   list: (params?: Record<string, string | number | undefined>) => api.get<JobItem[]>('/jobs/', { params }),
-  create: (data: CreateJobPayload) => api.post<JobItem>('/jobs/', data),
+  create: (data: CreateJobPayload) => {
+    if (data.source_image) {
+      const formData = new FormData();
+      formData.append('profile_id', data.profile_id);
+      formData.append('job_type', data.job_type);
+      formData.append('prompt', data.prompt ?? '');
+      formData.append('priority', String(data.priority ?? 100));
+      formData.append('request_payload', JSON.stringify(data.request_payload ?? {}));
+      formData.append('source_image', data.source_image);
+      return api.post<JobItem>('/jobs/with-source-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    }
+    const jsonPayload: Omit<CreateJobPayload, 'source_image'> = {
+      profile_id: data.profile_id,
+      job_type: data.job_type,
+      prompt: data.prompt ?? '',
+      request_payload: data.request_payload,
+      priority: data.priority,
+    };
+    return api.post<JobItem>('/jobs/', jsonPayload);
+  },
   getById: (id: string) => api.get<JobItem>(`/jobs/${id}`),
   cancel: (id: string) => api.post<JobItem>(`/jobs/${id}/cancel`),
   listArtifacts: (id: string) => api.get<JobArtifact[]>(`/jobs/${id}/artifacts`),
+  getArtifactContent: (jobId: string, artifactId: string, responseType: 'blob' | 'text' = 'blob') =>
+    api.get<Blob | string>(`/jobs/${jobId}/artifacts/${artifactId}/content`, { responseType }),
   runWorkerOnce: (workerId = 'staging-worker-01') => api.post<WorkerRunOnceResult>('/jobs/run-worker-once', { worker_id: workerId }),
 };
 

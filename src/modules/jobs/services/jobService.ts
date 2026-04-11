@@ -26,6 +26,16 @@ export async function fetchJobArtifacts(id: string): Promise<JobArtifact[]> {
   return res.data;
 }
 
+export async function fetchJobArtifactBlob(jobId: string, artifactId: string): Promise<Blob> {
+  const res = await jobsApi.getArtifactContent(jobId, artifactId, 'blob');
+  return res.data as Blob;
+}
+
+export async function fetchJobArtifactText(jobId: string, artifactId: string): Promise<string> {
+  const res = await jobsApi.getArtifactContent(jobId, artifactId, 'text');
+  return res.data as string;
+}
+
 export async function runWorkerOnce(workerId?: string): Promise<WorkerRunOnceResult> {
   const res = await jobsApi.runWorkerOnce(workerId);
   return res.data;

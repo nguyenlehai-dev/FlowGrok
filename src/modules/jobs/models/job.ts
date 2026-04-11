@@ -47,4 +47,5 @@ export type CreateJobPayload = {
   prompt: string;
   request_payload?: Record<string, unknown> | null;
   priority?: number;
+  source_image?: File | null;
 };

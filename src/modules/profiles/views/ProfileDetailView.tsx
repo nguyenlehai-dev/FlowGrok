@@ -26,6 +26,7 @@ const defaultRuntimeSettings: ProfileRuntimeSettings = {
   profile_id: '',
   browser_type: 'chromium',
   channel: null,
+  cdp_url: null,
   headless: true,
   timeout_ms: 120000,
   navigation_timeout_ms: 60000,
@@ -203,7 +204,23 @@ export default function ProfileDetailView() {
               </label>
               <label className="admin-field">
                 <span>Headless</span>
-                <input className="admin-input" value="true (forced by requirement)" disabled />
+                <select
+                  className="admin-select"
+                  value={runtimeSettings.headless ? 'true' : 'false'}
+                  onChange={(e) => setRuntimeSettings((current) => ({ ...current, headless: e.target.value === 'true' }))}
+                >
+                  <option value="false">false</option>
+                  <option value="true">true</option>
+                </select>
+              </label>
+              <label className="admin-field">
+                <span>CDP URL</span>
+                <input
+                  className="admin-input"
+                  value={runtimeSettings.cdp_url || ''}
+                  onChange={(e) => setRuntimeSettings((current) => ({ ...current, cdp_url: e.target.value || null }))}
+                  placeholder="http://127.0.0.1:9222"
+                />
               </label>
               <label className="admin-field">
                 <span>Timeout ms</span>
@@ -225,6 +242,9 @@ export default function ProfileDetailView() {
                 <button type="submit" className="admin-btn admin-btn-primary">Save Runtime</button>
               </div>
             </form>
+            <div className="admin-kv-list mt-3">
+              <div><strong>Grok tip:</strong> preferred runtime is <code>headless=false</code> or a connected <code>CDP URL</code> from the browser that already passed Grok login/challenge.</div>
+            </div>
           </div>
         </div>
 
@@ -330,7 +350,8 @@ export default function ProfileDetailView() {
               <div><strong>Cache:</strong> {profile.cache_path || 'n/a'}</div>
               <div><strong>Cookie File:</strong> {profile.cookie_import_name || 'n/a'}</div>
               <div><strong>Imported At:</strong> {profile.cookie_imported_at || 'n/a'}</div>
-              <div><strong>Headless:</strong> true</div>
+              <div><strong>Headless:</strong> {String(runtimeSettings.headless)}</div>
+              <div><strong>CDP URL:</strong> {runtimeSettings.cdp_url || 'n/a'}</div>
               <div><strong>Concurrency:</strong> {runtimeSettings.concurrency_limit}</div>
             </div>
           </div>

@@ -56,7 +56,7 @@ export default function ProfilesView() {
       proxy_id: proxyId || null,
       cookies_json: cookies || null,
       antidetect_settings: { user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-      headless: true,
+      headless: category === 'grok' ? false : true,
       concurrency_limit: concurrencyLimit,
       is_enabled: true,
     });
@@ -104,7 +104,7 @@ export default function ProfilesView() {
           <div><strong>Grok:</strong> {categoryDescriptions.grok}</div>
           <div><strong>Flow:</strong> {categoryDescriptions.flow}</div>
           <div><strong>Dreamina:</strong> {categoryDescriptions.dreamina}</div>
-          <div><strong>Headless:</strong> Luôn chạy <code>true</code> theo yêu cầu khách.</div>
+          <div><strong>Headless:</strong> Grok nên để <code>false</code> hoặc cấu hình CDP URL trong runtime settings; các provider khác có thể giữ <code>true</code>.</div>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ export default function ProfilesView() {
             </div>
             <div className="md:col-span-2 xl:col-span-3">
               <div className="rounded-2xl border border-[#ece8f5] bg-white px-4 py-3 text-sm text-[#6c6683]">
-                <strong>Runtime mặc định:</strong> headless=true, browser isolation riêng theo profile. Cookie import file chi tiết được thực hiện trong màn chi tiết profile sau khi tạo.
+                <strong>Runtime mặc định:</strong> Grok tạo profile với <code>headless=false</code>; nếu đã có browser đang login Grok, hãy khai báo CDP URL trong màn chi tiết profile. Cookie import file chi tiết được thực hiện trong màn chi tiết profile sau khi tạo.
               </div>
             </div>
             <div className="flex gap-3 md:col-span-2 xl:col-span-3">

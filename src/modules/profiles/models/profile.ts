@@ -44,6 +44,7 @@ export type ProfileRuntimeSettings = {
   profile_id: string;
   browser_type: string;
   channel: string | null;
+  cdp_url: string | null;
   headless: boolean;
   timeout_ms: number;
   navigation_timeout_ms: number;
