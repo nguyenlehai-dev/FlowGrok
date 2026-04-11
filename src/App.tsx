@@ -7,6 +7,7 @@ import LoginView from './modules/auth/views/LoginView';
 import ApiDocsView from './modules/api-docs/views/ApiDocsView';
 import DashboardView from './modules/dashboard/views/DashboardView';
 import JobsView from './modules/jobs/views/JobsView';
+import LocalAgentTestView from './modules/local-agent/views/LocalAgentTestView';
 import ProfileDetailView from './modules/profiles/views/ProfileDetailView';
 import ProfilesView from './modules/profiles/views/ProfilesView';
 import ProxiesView from './modules/proxies/views/ProxiesView';
@@ -42,6 +43,7 @@ function App() {
             <Route path="/" element={<DashboardView />} />
             <Route path="/jobs" element={<JobsView />} />
             <Route path="/jobs/:jobId" element={<JobsView />} />
+            <Route path="/local-agent-test" element={<LocalAgentTestView />} />
             <Route path="/profiles" element={<ProfilesView />} />
             <Route path="/profiles/:profileId" element={<ProfileDetailView />} />
             <Route path="/proxies" element={<ProxiesView />} />
