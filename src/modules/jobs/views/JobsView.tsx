@@ -6,6 +6,7 @@ import axios from 'axios';
 import type { JobArtifact, JobItem } from '../models/job';
 import {
   cancelJob,
+  createGatewayJob,
   createJob,
   fetchJob,
   fetchJobArtifactBlob,
@@ -16,6 +17,8 @@ import {
 } from '../services/jobService';
 import { fetchProfiles } from '../../profiles/services/profileService';
 import type { ProfileItem } from '../../profiles/models/profile';
+import { useSystemAuth } from '../../../auth/SystemAuthContext';
+import { getRuntimeGatewayJobEndpoint, setRuntimeGatewayJobEndpoint } from '../../../utils/runtimeConfig';
 
 type PreviewState =
   | { kind: 'idle' }
@@ -30,6 +33,7 @@ export default function JobsView() {
   const ARTIFACTS_PAGE_SIZE = 8;
   const navigate = useNavigate();
   const { jobId } = useParams();
+  const { apiBaseUrl, clientApiKey } = useSystemAuth();
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [profiles, setProfiles] = useState<ProfileItem[]>([]);
   const [selectedJob, setSelectedJob] = useState<JobItem | null>(null);
@@ -48,6 +52,9 @@ export default function JobsView() {
   const [search, setSearch] = useState('');
   const [workerState, setWorkerState] = useState<string>('');
   const [formError, setFormError] = useState<string>('');
+  const [gatewayState, setGatewayState] = useState<string>('');
+  const [useGatewaySubmit, setUseGatewaySubmit] = useState(true);
+  const [gatewayEndpoint, setGatewayEndpoint] = useState(getRuntimeGatewayJobEndpoint());
   const [isBusy, setIsBusy] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -269,24 +276,40 @@ export default function JobsView() {
   const handleCreateJob = async (e: FormEvent) => {
     e.preventDefault();
     setFormError('');
+    setGatewayState('');
+    setRuntimeGatewayJobEndpoint(gatewayEndpoint);
     try {
       const videoOptions: Record<string, unknown> = {};
       if (jobType === 'generate_video') {
         videoOptions.video_resolution = videoResolution;
         videoOptions.video_duration = videoDuration;
       }
-      const job = await createJob({
+      const payload = {
         profile_id: profileId,
         job_type: jobType,
         prompt,
         source_image: sourceImage,
         request_payload: Object.keys(videoOptions).length > 0 ? videoOptions : undefined,
-      });
+      };
+
+      if (useGatewaySubmit) {
+        if (sourceImage) {
+          setFormError('Gateway request hien tai gui JSON len server. Hay bo Source Image hoac yeu cau khach cung cap endpoint upload file.');
+          return;
+        }
+      }
+
+      const job = useGatewaySubmit
+        ? await createGatewayJob(apiBaseUrl, clientApiKey, payload, selectedProfile?.category, gatewayEndpoint)
+        : await createJob(payload);
       setPrompt('');
       setSourceImage(null);
       setShowForm(false);
+      setGatewayState(useGatewaySubmit ? `Gateway accepted: ${formatUiValue(job)}` : '');
       await loadJobs();
-      navigate(`/jobs/${job.id}`);
+      if (!useGatewaySubmit && job.id) {
+        navigate(`/jobs/${job.id}`);
+      }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setFormError(formatUiValue(error.response?.data?.detail || error.message));
@@ -433,6 +456,36 @@ export default function JobsView() {
                 </select>
               </label>
               <label className="admin-field admin-field-wide">
+                <span>Submit Mode</span>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input
+                    type="checkbox"
+                    checked={useGatewaySubmit}
+                    onChange={(e) => setUseGatewaySubmit(e.target.checked)}
+                  />
+                  <span>Send request to website gateway</span>
+                </label>
+                <small className="admin-field-hint">
+                  {useGatewaySubmit
+                    ? `Using ${gatewayEndpoint.trim() || `${apiBaseUrl || '/api/v1'}/gateway/generate`}. Server selects the profile/session; client only sends prompt.`
+                    : 'Using internal admin job endpoint on this frontend backend.'}
+                </small>
+              </label>
+              {useGatewaySubmit ? (
+                <label className="admin-field admin-field-wide">
+                  <span>Gateway Job Endpoint</span>
+                  <input
+                    className="admin-input"
+                    placeholder="/client/jobs/ or full URL from customer"
+                    value={gatewayEndpoint}
+                    onChange={(e) => setGatewayEndpoint(e.target.value)}
+                  />
+                  <small className="admin-field-hint">
+                    Leave blank to use `/gateway/generate`. Custom endpoints receive provider, type, prompt, options, and priority. You can use {"{kind}"} in the path.
+                  </small>
+                </label>
+              ) : null}
+              <label className="admin-field admin-field-wide">
                 <span>Prompt</span>
                 <textarea className="admin-textarea" value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={4} />
               </label>
@@ -494,6 +547,9 @@ export default function JobsView() {
                 <button type="button" className="admin-btn admin-btn-muted" onClick={() => setShowForm(false)}>Cancel</button>
               </div>
               {formError ? <div className="admin-toolbar-note">{formError}</div> : null}
+              {useGatewaySubmit && !clientApiKey ? (
+                <div className="admin-toolbar-note">Gateway mode se gui request khong kem API Key. Public API tren server hien tai dang yeu cau Bearer token trong System Auth.</div>
+              ) : null}
               {selectedProfile ? (
                 <div className="admin-kv-list">
                   <div><strong>Provider:</strong> {selectedProfile.category}</div>
@@ -540,6 +596,7 @@ export default function JobsView() {
             </div>
           </div>
           {workerState ? <div className="admin-toolbar-note">{workerState}</div> : null}
+          {gatewayState ? <div className="admin-toolbar-note">{gatewayState}</div> : null}
         </div>
       )}
 

@@ -54,8 +54,8 @@ export default function ApiDocsView() {
   const docsBaseUrl = getRuntimeApiBaseUrl() || API_BASE;
 
   const curlProfiles = `curl -X GET "${window.location.origin}${docsBaseUrl}/client/profiles/" \\\n  -H "Authorization: Bearer ${previewKey}"`;
-  const curlCreateJob = `curl -X POST "${window.location.origin}${docsBaseUrl}/client/jobs/" \\\n  -H "Authorization: Bearer ${previewKey}" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "profile_id": "your-profile-id",\n    "job_type": "generate_image",\n    "prompt": "A cinematic neon city at night"\n  }'`;
-  const curlGetArtifacts = `curl -X GET "${window.location.origin}${docsBaseUrl}/client/jobs/{job_id}/artifacts" \\\n  -H "Authorization: Bearer ${previewKey}"`;
+  const curlCreateJob = `curl -X POST "${window.location.origin}${docsBaseUrl}/gateway/generate" \\\n  -H "Authorization: Bearer ${previewKey}" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "provider": "grok",\n    "type": "image",\n    "prompt": "A cinematic neon city at night"\n  }'`;
+  const curlGetArtifacts = `curl -X GET "${window.location.origin}${docsBaseUrl}/gateway/jobs/{job_id}/artifacts" \\\n  -H "Authorization: Bearer ${previewKey}"`;
 
   const loadKeys = useCallback(async () => {
     setLoading(true);
@@ -150,7 +150,7 @@ export default function ApiDocsView() {
             <div><strong>Base URL:</strong> {docsBaseUrl}</div>
             <div><strong>Auth Mode:</strong> `Authorization: Bearer &lt;API_KEY&gt;`</div>
             <div><strong>Profile Scope:</strong> Chỉ profile thuộc chính user sở hữu API Key.</div>
-            <div><strong>Use Case:</strong> Dùng từ client tool bên ngoài, không gọi internal worker routes.</div>
+            <div><strong>Use Case:</strong> Client chỉ gửi prompt lên gateway; profile, cookie, session và worker nằm trên server.</div>
           </div>
         </div>
       </div>

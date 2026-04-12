@@ -31,6 +31,25 @@ const rawApi = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+function normalizeApiBaseUrl(apiBaseUrl: string) {
+  const trimmed = apiBaseUrl.trim() || '/api/v1';
+  if (trimmed.startsWith('http')) return trimmed.replace(/\/$/, '');
+  return `${window.location.origin}${trimmed.startsWith('/') ? trimmed : `/${trimmed}`}`.replace(/\/$/, '');
+}
+
+function normalizeGatewayEndpoint(apiBaseUrl: string, endpoint: string, jobKind: 'image' | 'video') {
+  const trimmedEndpoint = endpoint.trim();
+  if (!trimmedEndpoint) return '';
+  const resolvedEndpoint = trimmedEndpoint
+    .replace('{kind}', jobKind)
+    .replace('{type}', jobKind)
+    .replace('{job_type}', jobKind === 'video' ? 'generate_video' : 'generate_image');
+
+  if (resolvedEndpoint.startsWith('http')) return resolvedEndpoint;
+  if (resolvedEndpoint.startsWith('/')) return `${window.location.origin}${resolvedEndpoint}`;
+  return `${normalizeApiBaseUrl(apiBaseUrl)}/${resolvedEndpoint}`.replace(/([^:]\/)\/+/g, '$1');
+}
+
 type AuthUser = {
   id: string;
   email: string;
@@ -141,15 +160,87 @@ export const jobsApi = {
 export const systemApi = {
   health: () => healthApi.get<{ status: string; service: string; database: { dialect: string; url: string } }>('/health'),
   verifyClientKey: async (apiBaseUrl: string, apiKey: string) => {
-    const normalizedBase = apiBaseUrl.startsWith('http')
-      ? apiBaseUrl
-      : `${window.location.origin}${apiBaseUrl.startsWith('/') ? apiBaseUrl : `/${apiBaseUrl}`}`;
+    const normalizedBase = normalizeApiBaseUrl(apiBaseUrl);
     const response = await rawApi.get<ProfileItem[]>(`${normalizedBase}/client/profiles/`, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
     });
     return response.data;
+  },
+};
+
+export const clientGatewayApi = {
+  createJob: async (
+    apiBaseUrl: string,
+    apiKey: string,
+    data: CreateJobPayload,
+    provider?: string | null,
+    gatewayEndpoint = '',
+  ) => {
+    const normalizedBase = normalizeApiBaseUrl(apiBaseUrl);
+    const jobKind = data.job_type === 'generate_video' ? 'video' : 'image';
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+    };
+    const gatewayPayload = {
+      provider: provider || 'grok',
+      type: jobKind,
+      prompt: data.prompt ?? '',
+      options: data.request_payload ?? {},
+      priority: data.priority,
+    };
+    const customEndpoint = normalizeGatewayEndpoint(apiBaseUrl, gatewayEndpoint, jobKind);
+    if (customEndpoint) {
+      return rawApi.post<JobItem>(customEndpoint, gatewayPayload, { headers });
+    }
+
+    try {
+      return await rawApi.post<JobItem>(`${normalizedBase}/gateway/generate`, gatewayPayload, { headers });
+    } catch (error) {
+      if (!axios.isAxiosError(error) || ![404, 405].includes(error.response?.status ?? 0)) {
+        throw error;
+      }
+    }
+
+    const commonPayload = {
+      profile_id: data.profile_id,
+      job_type: data.job_type,
+      prompt: data.prompt ?? '',
+      request_payload: data.request_payload ?? {},
+      priority: data.priority,
+    };
+    try {
+      return await rawApi.post<JobItem>(`${normalizedBase}/client/jobs/`, commonPayload, { headers });
+    } catch (error) {
+      if (!axios.isAxiosError(error) || ![404, 405].includes(error.response?.status ?? 0)) {
+        throw error;
+      }
+    }
+
+    return rawApi.post<JobItem>(
+      `${normalizedBase}/client/jobs/${jobKind}`,
+      {
+        profile_id: data.profile_id,
+        provider: provider || undefined,
+        prompt: data.prompt ?? '',
+        options: data.request_payload ?? {},
+      },
+      { headers },
+    );
+  },
+  getJob: (apiBaseUrl: string, apiKey: string, id: string) => {
+    const normalizedBase = normalizeApiBaseUrl(apiBaseUrl);
+    return rawApi.get<JobItem>(`${normalizedBase}/gateway/jobs/${id}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+  },
+  listArtifacts: (apiBaseUrl: string, apiKey: string, id: string) => {
+    const normalizedBase = normalizeApiBaseUrl(apiBaseUrl);
+    return rawApi.get<JobArtifact[]>(`${normalizedBase}/gateway/jobs/${id}/artifacts`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
   },
 };
 

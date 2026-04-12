@@ -1,4 +1,4 @@
-import { jobsApi } from '../../../api/client';
+import { clientGatewayApi, jobsApi } from '../../../api/client';
 import type { CreateJobPayload, JobArtifact, JobItem, WorkerRunOnceResult } from '../models/job';
 
 export async function fetchJobs(params?: Record<string, string | number | undefined>): Promise<JobItem[]> {
@@ -13,6 +13,17 @@ export async function fetchJob(id: string): Promise<JobItem> {
 
 export async function createJob(payload: CreateJobPayload): Promise<JobItem> {
   const res = await jobsApi.create(payload);
+  return res.data;
+}
+
+export async function createGatewayJob(
+  apiBaseUrl: string,
+  apiKey: string,
+  payload: CreateJobPayload,
+  provider?: string | null,
+  gatewayEndpoint?: string,
+): Promise<JobItem> {
+  const res = await clientGatewayApi.createJob(apiBaseUrl, apiKey, payload, provider, gatewayEndpoint);
   return res.data;
 }
 
