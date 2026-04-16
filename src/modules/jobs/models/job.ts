@@ -9,13 +9,14 @@ export type JobItem = {
   job_type?: string | null;
   request_payload?: Record<string, unknown> | null;
   status: string;
-  priority: number;
-  retry_count: number;
+  priority?: number | null;
+  retry_count?: number | null;
   worker_id?: string | null;
   proxy_snapshot?: Record<string, unknown> | null;
   browser_session_path?: string | null;
   result_url?: string | null;
   result_payload?: Record<string, unknown> | null;
+  error_message?: string | null;
   error_logs?: string | null;
   started_at?: string | null;
   finished_at?: string | null;

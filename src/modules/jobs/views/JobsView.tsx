@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Bot, ChevronLeft, ChevronRight, CircleEllipsis, Download, ExternalLink, LoaderCircle, Plus, RefreshCcw, SquareX, X } from 'lucide-react';
+import { Bot, ChevronLeft, ChevronRight, CircleEllipsis, Download, EyeOff, ExternalLink, LoaderCircle, Plus, RefreshCcw, SquareX, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import type { JobArtifact, JobItem } from '../models/job';
@@ -664,7 +664,11 @@ export default function JobsView() {
               <div><strong>Started:</strong> {selectedJob.started_at ? new Date(selectedJob.started_at).toLocaleString() : 'n/a'}</div>
               <div><strong>Finished:</strong> {selectedJob.finished_at ? new Date(selectedJob.finished_at).toLocaleString() : 'n/a'}</div>
               <div><strong>Result:</strong> {selectedJob.result_url || 'n/a'}</div>
-              <div><strong>Error:</strong> {selectedJob.error_logs || 'none'}</div>
+              <div><strong>Error:</strong> {selectedJob.error_message || selectedJob.error_logs || 'none'}</div>
+              <div className="admin-field-wide">
+                <strong>Live Preview:</strong>
+                {renderJobRuntimePreview(selectedJob)}
+              </div>
             </div>
           ) : (
             <p className="admin-page-subtitle">Select a job from the queue to inspect detail and artifacts.</p>
@@ -849,6 +853,79 @@ function renderPreview(preview: PreviewState, isModal = false) {
   return null;
 }
 
+function renderJobRuntimePreview(job: JobItem) {
+  const runtime = getJobRuntime(job);
+  const isWorking = ['pending', 'queued', 'reserved', 'booting_browser', 'logging_in', 'running', 'uploading_result'].includes(job.status);
+  const blocked = Boolean(runtime.blocked) || isSensitiveError(job.error_message || job.error_logs || '');
+  const progress = getRuntimeProgress(job);
+  const message = getRuntimeMessage(job);
+
+  if (blocked) {
+    return (
+      <div style={{ marginTop: 10, display: 'grid', gap: 10 }}>
+        <div
+          style={{
+            minHeight: 180,
+            borderRadius: 16,
+            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))',
+            display: 'grid',
+            placeItems: 'center',
+            color: '#dbe7ff',
+          }}
+        >
+          <div style={{ display: 'grid', justifyItems: 'center', gap: 10 }}>
+            <EyeOff size={56} />
+            <strong>Grok hidden / 18+</strong>
+            <span style={{ maxWidth: 520, textAlign: 'center', color: '#aeb9d4' }}>
+              {String(runtime.provider_notice || job.error_message || job.error_logs || 'Grok hid or blocked this result.')}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isWorking && !message) {
+    return <div className="admin-toolbar-note" style={{ marginTop: 10 }}>No live preview.</div>;
+  }
+
+  return (
+    <div style={{ marginTop: 10, display: 'grid', gap: 10 }}>
+      <div
+        style={{
+          minHeight: 160,
+          borderRadius: 16,
+          border: '1px solid rgba(255,255,255,0.1)',
+          background: '#0b1020',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'grid',
+          placeItems: 'center',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            opacity: 0.22,
+            backgroundImage: 'radial-gradient(circle, #dbe7ff 1px, transparent 1.5px)',
+            backgroundSize: '26px 26px',
+          }}
+        />
+        <div style={{ position: 'relative', display: 'grid', justifyItems: 'center', gap: 12, color: '#dbe7ff' }}>
+          <LoaderCircle size={28} className={isWorking ? 'spin' : undefined} />
+          <strong>{message || 'Waiting for Grok progress...'}</strong>
+          <div style={{ width: 260, height: 10, borderRadius: 999, background: 'rgba(255,255,255,0.12)', overflow: 'hidden' }}>
+            <span style={{ display: 'block', width: `${progress}%`, height: '100%', borderRadius: 999, background: '#22c55e' }} />
+          </div>
+          <span style={{ color: '#aeb9d4' }}>{progress}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function getArtifactFileName(artifact: JobArtifact): string {
   const raw = artifact.public_url || artifact.file_path;
   const normalized = raw.replace(/\\/g, '/');
@@ -914,11 +991,12 @@ function formatUiValue(value: unknown): string {
 function renderJobStatus(job: JobItem) {
   const progress = getJobProgress(job);
   const statusClass = getJobStatusClass(job.status);
+  const runtimeMessage = getRuntimeMessage(job);
 
   return (
     <div className="admin-job-status">
       <span className={`admin-status ${statusClass}`}>{job.status}</span>
-      <div className="admin-job-progress" aria-label={`Job progress ${progress}%`}>
+      <div className="admin-job-progress" aria-label={`Job progress ${progress}%`} title={runtimeMessage}>
         <span className="admin-job-progress-bar" style={{ width: `${progress}%` }} />
       </div>
       <span className="admin-job-progress-text">{progress}%</span>
@@ -927,7 +1005,7 @@ function renderJobStatus(job: JobItem) {
 }
 
 function getJobStatusClass(status: string): string {
-  if (status === 'completed') return 'publish';
+  if (status === 'completed' || status === 'succeeded') return 'publish';
   if (['queued', 'reserved', 'booting_browser', 'logging_in', 'running', 'uploading_result'].includes(status)) {
     return 'scheduled';
   }
@@ -935,10 +1013,15 @@ function getJobStatusClass(status: string): string {
 }
 
 function getJobProgress(job: JobItem): number {
-  if (job.status === 'completed') return 100;
+  const runtimeProgress = getRuntimeProgress(job);
+  if (runtimeProgress > 0 && ['pending', 'queued', 'reserved', 'booting_browser', 'logging_in', 'running', 'uploading_result'].includes(job.status)) {
+    return runtimeProgress;
+  }
+  if (job.status === 'completed' || job.status === 'succeeded') return 100;
   if (job.status === 'failed' || job.status === 'cancelled') return 0;
 
   const baseProgress: Record<string, number> = {
+    pending: 5,
     queued: 5,
     reserved: 12,
     booting_browser: 22,
@@ -956,4 +1039,30 @@ function getJobProgress(job: JobItem): number {
   const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
   const timeBonus = Math.min(20, Math.floor(elapsedSeconds / 18));
   return Math.min(85, base + timeBonus);
+}
+
+function getJobRuntime(job: JobItem): Record<string, unknown> {
+  const payload = job.result_payload;
+  const runtime = payload?.runtime;
+  return runtime && typeof runtime === 'object' && !Array.isArray(runtime) ? runtime as Record<string, unknown> : {};
+}
+
+function getRuntimeProgress(job: JobItem): number {
+  const value = getJobRuntime(job).progress_percent;
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, Math.min(100, Math.round(value)));
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) {
+    return Math.max(0, Math.min(100, Math.round(Number(value))));
+  }
+  return 0;
+}
+
+function getRuntimeMessage(job: JobItem): string {
+  const runtime = getJobRuntime(job);
+  const message = runtime.progress_message || runtime.provider_notice;
+  return typeof message === 'string' ? message : '';
+}
+
+function isSensitiveError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return ['18+', 'sensitive', 'hidden', 'blocked', 'hid', 'policy'].some((token) => normalized.includes(token));
 }
