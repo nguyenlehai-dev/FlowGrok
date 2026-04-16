@@ -5,6 +5,8 @@
 - [Profile Automation System Analysis](/home/vpsroot/projects/frontend/FlowGrok/docs/architecture/PROFILE_AUTOMATION_SYSTEM_ANALYSIS.md)
 - [Database Design](/home/vpsroot/projects/frontend/FlowGrok/docs/architecture/DATABASE_DESIGN.md)
 - [Worker Automation Design](/home/vpsroot/projects/frontend/FlowGrok/docs/architecture/WORKER_AUTOMATION_DESIGN.md)
+- [Playwright Chromium Memory Plan](/home/vpsroot/projects/frontend/FlowGrok/docs/architecture/PLAYWRIGHT_CHROMIUM_MEMORY_PLAN.md)
+- [Prod Rollout Checklist](/home/vpsroot/projects/frontend/FlowGrok/docs/architecture/PROD_ROLLOUT_CHECKLIST.md)
 
 ## API
 
