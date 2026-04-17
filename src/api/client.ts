@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AxiosError } from 'axios';
+import { clearStoredToken, getStoredToken } from '../store/authStorage';
 import type {
   CreateProfilePayload,
   ProfileAntidetectSettings,
@@ -44,8 +45,10 @@ type AuthTokenResponse = {
 
 // Tự động gắn Bearer token vào mọi request
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
+  const url = config.url ?? '';
+  const isAuthBootstrapRequest = url.includes('/auth/login') || url.includes('/auth/register');
+  const token = getStoredToken();
+  if (token && !isAuthBootstrapRequest) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -54,8 +57,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ detail?: string }>) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+    const requestHadToken = Boolean(error.config?.headers?.Authorization);
+    if (error.response?.status === 401 && requestHadToken) {
+      clearStoredToken();
       if (window.location.pathname !== '/login') {
         window.location.replace('/login');
       }

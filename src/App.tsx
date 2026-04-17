@@ -14,8 +14,9 @@ import ProxiesView from './modules/proxies/views/ProxiesView';
 import ApiKeysView from './modules/api-keys/views/ApiKeysView';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token } = useAuthStore();
+  const { token, isLoading } = useAuthStore();
   if (!token) return <Navigate to="/login" replace />;
+  if (isLoading) return <div className="admin-page-shell">Checking your session...</div>;
   return <>{children}</>;
 }
 
