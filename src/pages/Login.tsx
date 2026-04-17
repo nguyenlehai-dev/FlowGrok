@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuthStore();
@@ -26,9 +26,9 @@ export default function LoginPage() {
     try {
       if (isRegister) {
         await register(email, password);
-        await login(email, password);
+        await login(email, password, rememberMe);
       } else {
-        await login(email, password);
+        await login(email, password, rememberMe);
       }
       navigate('/');
     } catch (err) {
